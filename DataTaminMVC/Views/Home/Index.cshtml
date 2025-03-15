@@ -1,0 +1,64 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Book Store</title>
+    <link rel="stylesheet" href="~/tabulator/css/tabulator_bootstrap4.min.css" />
+    <style>
+        body{
+            direction: rtl;
+
+        }
+    </style>
+</head>
+<body>
+    <h1>کتاب ها</h1>
+    <div id="bookTable"></div>
+    <script src="~/tabulator/js/tabulator.min.js"></script>
+    <script>
+        var table = new Tabulator("#bookTable", {
+            ajaxURL: "api/Books",
+            pagination: "local",
+            paginationSize: 5,
+            paginationSizeSelector: [5, 10, 20],
+            layout: "fitColumns",
+            placeholder: "هیچ کتابی موجود نیست",
+            columns: [
+                {
+                    title: "شناسه",
+                    field: "id",
+                    headerFilter: "input",
+                    headerFilterPlaceholder: "جستجوی شناسه",
+                },
+                {
+                    title: "عنوان",
+                    field: "title",
+                    headerFilter: "input",
+                    headerFilterPlaceholder: "جستجوی عنوان",
+                },
+                {
+                    title: "نویسنده",
+                    field: "author",
+                    headerFilter: "input",
+                    headerFilterPlaceholder: "جستجوی نویسنده",
+                },
+                {
+                    title: "سال انتشار",
+                    field: "publishedYear",
+                    headerFilter: "input",
+                    headerFilterPlaceholder: "جستجوی سال",
+                },
+                {
+                    title: "قیمت",
+                    field: "price",
+                    formatter: "money",
+                    headerFilter: "input",
+                    headerFilterPlaceholder: "جستجوی قیمت",
+                },
+            ]
+        });
+    </script>
+</body>
+</html>
+
