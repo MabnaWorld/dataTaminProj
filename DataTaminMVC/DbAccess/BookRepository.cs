@@ -26,10 +26,11 @@ namespace DataTaminMVC.DbAccess
                     {
                         books.Add(new Book
                         {
-                            Id = reader.GetInt32(0),
-                            Title = reader.GetString(1),
-                            Author = reader.GetString(2),
-                            PublishedYear = reader.GetInt32(3),
+                            Id = reader.GetInt32("Id"),
+                            Title = reader.GetString("Title"),
+                            Author = reader.GetString("Author"),
+                            PublishedYear = reader.IsDBNull("PublishedYear") ? null : reader.GetInt32("PublishedYear"),
+                            Price = reader.IsDBNull("Price") ? null : reader.GetDecimal("Price")
                         });
                     }
                 }
@@ -51,10 +52,11 @@ namespace DataTaminMVC.DbAccess
                     {
                         return new Book
                         {
-                            Id = reader.GetInt32(0),
-                            Title = reader.GetString(1),
-                            Author = reader.GetString(2),
-                            PublishedYear = reader.GetInt32(3)
+                            Id = reader.GetInt32("Id"),
+                            Title = reader.GetString("Title"),
+                            Author = reader.GetString("Author"),
+                            PublishedYear = reader.IsDBNull("PublishedYear") ? null : reader.GetInt32("PublishedYear"),
+                            Price = reader.IsDBNull("Price") ? null : reader.GetDecimal("Price")
                         };
                     }
                 }
@@ -71,6 +73,7 @@ namespace DataTaminMVC.DbAccess
                 cmd.Parameters.AddWithValue("@title", book.Title);
                 cmd.Parameters.AddWithValue("@author", book.Author);
                 cmd.Parameters.AddWithValue("@PublishedYear", book.PublishedYear);
+                cmd.Parameters.AddWithValue("@Price", book.Price);
                 conn.Open();
                 return cmd.ExecuteNonQuery();
             }
@@ -82,10 +85,11 @@ namespace DataTaminMVC.DbAccess
             using (SqlCommand cmd = new SqlCommand("UpdateBook_sp", conn))
             {
                 cmd.CommandType = CommandType.StoredProcedure;
-                cmd.Parameters.AddWithValue("@Id", book.Id);
+                cmd.Parameters.AddWithValue("@Id", Id);
                 cmd.Parameters.AddWithValue("@title", book.Title);
                 cmd.Parameters.AddWithValue("@author", book.Author);
                 cmd.Parameters.AddWithValue("@PublishedYear", book.PublishedYear);
+                cmd.Parameters.AddWithValue("@Price", book.Price);
                 conn.Open();
                 return cmd.ExecuteNonQuery();
             }

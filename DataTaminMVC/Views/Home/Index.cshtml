@@ -1,22 +1,88 @@
-﻿<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Book Store</title>
-    <link rel="stylesheet" href="~/tabulator/css/tabulator.min.css" />
-    <style>
-        body{
-            direction: rtl;
-
-        }
-    </style>
-</head>
-<body>
+﻿<div class="container mt-4">
     <h1>کتاب ها</h1>
+
+    <button id="createBookBtn" class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#createBookModal">کتاب جدید</button>
+
     <div id="bookTable"></div>
-    <script src="~/tabulator/js/tabulator.min.js"></script>
+
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="createBookModal" tabindex="-1" aria-labelledby="createBookModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <!-- Modal Header -->
+            <div class="modal-header">
+                <h5 class="modal-title" id="createBookModalLabel">Create New Book</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <!-- Modal Body with Form -->
+            <div class="modal-body">
+                <form id="bookForm">
+                    <div class="mb-3">
+                        <label for="bookTitle" class="form-label">عنوان</label>
+                        <input type="text" class="form-control" id="bookTitle" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="bookAuthor" class="form-label">نویسنده</label>
+                        <input type="text" class="form-control" id="bookAuthor" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="publishedYear" class="form-label">سال انتشار</label>
+                        <input type="number" class="form-control" id="publishedYear" min="0">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="bookPrice" class="form-label">قیمت</label>
+                        <div class="input-group">
+                            <span class="input-group-text">تومان</span>
+                            <input type="number" class="form-control" id="bookPrice" step="50000" min="0">
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="saveBook">ثبت</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">بستن</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">تایید حذف</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                آیا از حذف این کتاب اطمینان دارید؟
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">حذف</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
     <script>
+
+        var actionFormatter = function (cell, formatterParams, onRendered) {
+            return '<button class="btn btn-sm btn-success edit-btn ms-1">ویرایش</button>' +
+                '<button class="btn btn-sm btn-danger delete-btn">حذف</button>';
+        };
+
         var table = new Tabulator("#bookTable", {
             ajaxURL: "api/Books",
             pagination: "local",
@@ -56,9 +122,106 @@
                     headerFilter: "input",
                     headerFilterPlaceholder: "جستجوی قیمت",
                 },
+                ,
+                {
+                    title: "عملیات",
+                    formatter: actionFormatter,
+                    hozAlign: "center",
+                    headerSort: false,
+                    cellClick: function (e, cell) {
+                        if (e.target.classList.contains('edit-btn')) {
+                            openEditModal(cell.getRow().getData());
+                        } else if (e.target.classList.contains('delete-btn')) {
+                            deleteBook(cell.getRow().getData().id);
+                        }
+                    }
+                }
             ]
         });
+
+        var currentBookId = null;
+
+        $("#saveBook").click(function () {
+            const book = {
+                title: $("#bookTitle").val().trim(),
+                author: $("#bookAuthor").val().trim(),
+                publishedYear: $("#publishedYear").val() ? parseInt($("#publishedYear").val()) : null,
+                price: $("#bookPrice").val() ? parseFloat($("#bookPrice").val()) : null
+            };
+
+            console.log(book);
+
+            if (!book.title || !book.author || isNaN(book.publishedYear) || isNaN(book.price)) {
+                alert('لطفا همه فیلدها را پر کنید');
+                return;
+            }
+            if (currentBookId == null) {
+                $.ajax({
+                    url: "/api/Books",
+                    type: "POST",
+                    contentType: "application/json",
+                    data: JSON.stringify(book),
+                    success: function (data) {
+                        $("#bookForm")[0].reset();
+                        table.replaceData();
+                        $("#createBookModal").modal("hide"); // Close modal
+                    },
+                    error: function (error) {
+                        console.error("Error:", error);
+                        alert('خطا در ثبت کتاب');
+
+                    }
+                });
+            }
+            else {
+                $.ajax({
+                    url: `api/Books/${currentBookId}`,
+                    type: 'PUT',
+                    contentType: 'application/json',
+                    data: JSON.stringify(book),
+                    success: function () {
+                        $("#bookForm")[0].reset();
+                        $("#createBookModal").modal("hide"); // Close modal
+                        table.replaceData();
+                    },
+                    error: function () {
+                        alert('خطا در بروزرسانی کتاب');
+                    }
+                });
+            }
+        });
+
+
+        function openEditModal(book) {
+            $('#bookModalLabel').text('ویرایش کتاب');
+            $('#bookTitle').val(book.title);
+            $('#bookAuthor').val(book.author);
+            $('#publishedYear').val(book.publishedYear);
+            $('#bookPrice').val(book.price);
+            currentBookId = book.id;
+            $("#createBookModal").modal("show");
+
+        }
+
+
+        function deleteBook(id) {
+            $.ajax({
+                url: `api/Books/${id}`,
+                type: 'DELETE',
+                success: function () {
+                    $("#deleteModal").modal("hide"); // Close modal
+
+                    table.replaceData();
+                },
+                error: function () {
+                    alert('خطا در حذف کتاب');
+                }
+            });
+        }
+
+
+
     </script>
-</body>
-</html>
+}
+
 

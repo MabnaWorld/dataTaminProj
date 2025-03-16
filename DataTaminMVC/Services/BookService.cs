@@ -5,17 +5,47 @@ namespace DataTaminMVC.Services
 {
     public class BookService
     {
-        public BookRepository BookRepository = new BookRepository();
+        private readonly BookRepository bookRepository = new BookRepository();
+
         public List<Book> GetBooks()
         {
-            return BookRepository.GetAllBooks();
+            return bookRepository.GetAllBooks();
         }
 
-        public Book GetBook(int id)
+        public Book? GetBook(int id)
         {
-            return BookRepository.GetBookById(id);
+            return bookRepository.GetBookById(id);
         }
 
+        public int AddBook(Book book)
+        {
+            return bookRepository.AddBook(book);
+        }
 
+        public bool UpdateBook(int id, Book book)
+        {
+            try
+            {
+                int result = bookRepository.UpdateBook(id, book);
+                return result > 0; 
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public bool DeleteBook(int id)
+        {
+            try
+            {
+                int result = bookRepository.DeleteBook(id);
+                return result > 0;
+            }
+            catch
+            {
+                return false;
+            }
+        }
     }
 }
